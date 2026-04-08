@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   Zap, 
@@ -18,15 +18,104 @@ import {
   Shield,
   Download,
   Trash2,
-  ChevronRight
+  ChevronRight,
+  Lock,
+  Loader2
 } from "lucide-react";
 import { Button, Card, Input } from "../components/UI";
+import { auth, db } from "../lib/firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 
 type Tab = "overview" | "history" | "billing" | "settings";
 
 export const DashboardPage = ({ onNavigate }: { onNavigate: (page: string) => void }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("overview");
+  const [accessStatus, setAccessStatus] = useState<"loading" | "granted" | "denied">("loading");
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        // Not logged in at all → send to login
+        onNavigate("login");
+        return;
+      }
+      setUserEmail(user.email);
+      try {
+        const snap = await getDoc(doc(db, "users", user.uid));
+        if (snap.exists()) {
+          const data = snap.data();
+          const tier = data?.tier || "free";
+          if (tier === "unlimited" || tier === "pro") {
+            setAccessStatus("granted");
+          } else {
+            setAccessStatus("denied");
+          }
+        } else {
+          // No Firestore record → treat as free
+          setAccessStatus("denied");
+        }
+      } catch (e) {
+        console.error("Subscription check error:", e);
+        setAccessStatus("denied");
+      }
+    });
+    return () => unsubscribe();
+  }, [onNavigate]);
+
+  // ── Loading spinner ──────────────────────────────────────────
+  if (accessStatus === "loading") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="flex flex-col items-center gap-4 text-gray-500">
+          <Loader2 className="animate-spin" size={40} />
+          <p className="text-sm font-medium">Checking your subscription…</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Access denied — no active subscription ───────────────────
+  if (accessStatus === "denied") {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-md w-full text-center"
+        >
+          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gray-100 flex items-center justify-center">
+            <Lock size={36} className="text-gray-400" />
+          </div>
+          <h1 className="text-2xl font-bold text-black mb-2">Dashboard Locked</h1>
+          <p className="text-gray-500 mb-1 text-sm">
+            Signed in as <span className="font-medium text-black">{userEmail}</span>
+          </p>
+          <p className="text-gray-500 mb-8 text-sm">
+            A Prompt Engine Pro subscription is required to access your dashboard.
+          </p>
+          <div className="space-y-3">
+            <Button
+              onClick={() => onNavigate("checkout")}
+              className="w-full bg-black text-white hover:bg-gray-800 py-3 text-base font-semibold"
+            >
+              Subscribe Now · $5 / month
+            </Button>
+            <button
+              onClick={() => onNavigate("landing")}
+              className="w-full text-sm text-gray-400 hover:text-black transition-colors"
+            >
+              Back to home
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
+
 
   const versions = [
     { id: 1, title: "Product Description v3", date: "2 hours ago", platform: "Shopify", tokens: 124 },
@@ -380,11 +469,10 @@ export const DashboardPage = ({ onNavigate }: { onNavigate: (page: string) => vo
       {/* Mobile Header */}
       <div className="lg:hidden bg-white border-b border-gray-200 px-4 h-16 flex items-center justify-between sticky top-0 z-50">
         <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-black text-white flex items-center justify-center">
-            <Zap size={18} fill="currentColor" />
-          </div>
-          <span className="font-serif font-bold text-xl">Prompt Engine</span>
+          <img src="/hng-logo.png" alt="HNG AI LAB Logo" className="h-10 w-auto" />
+          <span className="font-serif font-bold text-xl sr-only">Prompt Engine</span>
         </div>
+
         <button 
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           className="p-2 text-gray-500"
@@ -419,11 +507,10 @@ export const DashboardPage = ({ onNavigate }: { onNavigate: (page: string) => vo
       {/* Sidebar (Desktop) */}
       <aside className="w-64 border-r border-gray-200 bg-white hidden lg:flex flex-col sticky top-0 h-screen">
         <div className="p-6 flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-black text-white flex items-center justify-center">
-            <Zap size={18} fill="currentColor" />
-          </div>
-          <span className="font-serif font-bold text-xl">Prompt Engine</span>
+          <img src="/hng-logo.png" alt="HNG AI LAB Logo" className="h-10 w-auto" />
+          <span className="font-serif font-bold text-xl sr-only">Prompt Engine</span>
         </div>
+
 
         <nav className="flex-1 px-4 space-y-1">
           <NavItems />

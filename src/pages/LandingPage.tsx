@@ -12,11 +12,10 @@ export const LandingPage = ({ onNavigate }: { onNavigate: (page: string) => void
       <nav className="fixed top-0 z-50 w-full glass border-b border-gray-100">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-black text-white">
-              <Zap size={18} fill="currentColor" />
-            </div>
-            <span className="text-xl font-serif font-bold tracking-tight">Prompt Engine</span>
+            <img src="/hng-logo.png" alt="HNG AI LAB Logo" className="h-12 w-auto" />
+            <span className="text-xl font-serif font-bold tracking-tight sr-only">Prompt Engine</span>
           </div>
+
           
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-4">
@@ -217,10 +216,10 @@ export const LandingPage = ({ onNavigate }: { onNavigate: (page: string) => void
           </div>
           <p className="text-sm text-gray-500">© 2026 HNG AI Lab. All rights reserved.</p>
           <div className="flex flex-wrap justify-center gap-6 text-sm text-gray-500">
-            <button onClick={() => onNavigate("privacy")} className="hover:text-black transition-colors">Privacy</button>
-            <button onClick={() => onNavigate("refund")} className="hover:text-black transition-colors">Refunds</button>
-            <button onClick={() => onNavigate("disclaimer")} className="hover:text-black transition-colors">Disclaimer</button>
-            <button onClick={() => onNavigate("contact")} className="hover:text-black transition-colors">Contact</button>
+            <a href="privacy.html" className="hover:text-black transition-colors">Privacy</a>
+            <a href="terms.html" className="hover:text-black transition-colors">Refunds</a>
+            <a href="terms.html" className="hover:text-black transition-colors">Terms</a>
+            <a href="mailto:support@hypenestglobal.com" className="hover:text-black transition-colors">Contact</a>
           </div>
         </div>
       </footer>
